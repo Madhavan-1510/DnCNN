@@ -41,22 +41,35 @@ ip_repo/
 
 ## 3. RTL Sources — `tlast_gen` and `EEPROM_8b`
 
-These are not IPs — they are plain Verilog source files.  
-Find them in the project under:
-
-```
-<your_project>/design_1/src/
-```
-
-Copy them into the `src/` folder at the root of this repo:
+These are **not packaged IPs** — they are RTL source files that get added directly to your Vivado project.
+All 5 files live in the `src/` folder at the root of this repo:
 
 ```
 src/
-├── tlast_gen.v
-└── EEPROM_8b.v
+├── tlast_gen.v           # AXI-Stream TLAST generator — standalone
+│
+├── EEPROM_8b.vhd         # EEPROM top-level module  ┐
+├── TWI_SlaveCtl.vhd      # I2C slave controller     │ these 4 must all
+├── GlitchFilter.vhd      # glitch filter for SCL/SDA│ be added together
+└── SyncAsync.vhd         # async to sync bridge     ┘
 ```
 
-They need to be **added as sources** in your Vivado project before sourcing the block design TCL — not added to `ip_repo`.
+> ⚠️ The EEPROM will not work if any of the 4 VHDL files are missing.
+> `EEPROM_8b.vhd` is the top level — the other three are submodules it instantiates internally.
+
+### Adding them to your Vivado project
+
+In Vivado, before sourcing the BD TCL:
+
+1. Go to **Flow Navigator → Add Sources → Add or Create Design Sources**
+2. Click **Add Files** and select all 5 files:
+   - `tlast_gen.v`
+   - `EEPROM_8b.vhd`
+   - `TWI_SlaveCtl.vhd`
+   - `GlitchFilter.vhd`
+   - `SyncAsync.vhd`
+3. Make sure **Copy sources into project** is checked
+4. Click **Finish**
 
 ---
 
@@ -69,13 +82,16 @@ ip_repo/
 ├── viip/                          ✅ custom dncnn IP
 └── digilent-vivado-ip/            ✅ cloned from Digilent GitHub
 src/
-├── tlast_gen.v                    ✅ copied from your project src/
-└── EEPROM_8b.v                    ✅ copied from your project src/
+├── tlast_gen.v                    ✅ tlast_gen source
+├── EEPROM_8b.vhd                  ✅ EEPROM top level
+├── TWI_SlaveCtl.vhd               ✅ EEPROM dependency
+├── GlitchFilter.vhd               ✅ EEPROM dependency
+└── SyncAsync.vhd                  ✅ EEPROM dependency
 bd/
 └── design_1_bd.tcl
 ```
 
-Then in Vivado Tcl Console, set the IP repo paths:
+Then in the Vivado Tcl Console, set the IP repo paths:
 
 ```tcl
 set_property ip_repo_paths {
